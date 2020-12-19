@@ -11,8 +11,11 @@ from tensorflow.python.saved_model import tag_constants
 from PIL import Image
 import cv2
 import numpy as np
-from tensorflow.compat.v1 import ConfigProto
-from tensorflow.compat.v1 import InteractiveSession
+#if python >= 3.7: uncomment line 14 15 and comment line 16 17
+#from tensorflow.compat.v1 import ConfigProto
+#from tensorflow.compat.v1 import InteractiveSession
+from tensorflow._api.v2.compat.v1 import ConfigProto
+from tensorflow._api.v2.compat.v1 import InteractiveSession
 
 flags.DEFINE_string('framework', 'tf', '(tf, tflite, trt')
 flags.DEFINE_string('weights', './checkpoints/yolov4-416',
