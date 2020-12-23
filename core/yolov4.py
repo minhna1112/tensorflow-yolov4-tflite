@@ -193,29 +193,34 @@ def decode_train(conv_output, output_size, NUM_CLASS, STRIDES, ANCHORS, i=0, XYS
 
 def decode_tf(conv_output, output_size, NUM_CLASS, STRIDES, ANCHORS, i=0, XYSCALE=[1, 1, 1]):
     batch_size = tf.shape(conv_output)[0]
+    #print(batch_size)
     conv_output = tf.reshape(conv_output,
                              (batch_size, output_size, output_size, 3, 5 + NUM_CLASS))
 
     conv_raw_dxdy, conv_raw_dwdh, conv_raw_conf, conv_raw_prob = tf.split(conv_output, (2, 2, 1, NUM_CLASS),
                                                                           axis=-1)
+    # -> list[(batch_size, output_size, output_size, 3, 2),
+    #(batch_size, output_size, output_size, 3, 2),
+    #(batch_size, output_size, output_size, 3, 1),
+    #(batch_size, output_size, output_size, 3, 1)]
+    xy_grid = tf.meshgrid(tf.range(output_size), tf.range(output_size)) #[(output_size, output_size), (output_size, output_size)]
+    #print(xy_grid)
+    xy_grid = tf.expand_dims(tf.stack(xy_grid, axis=-1), axis=2)  # [gx, gy, 1, 2](output_size, output_size, 2) -> (output_size, output_size, 1, 2)
+    xy_grid = tf.tile(tf.expand_dims(xy_grid, axis=0), [batch_size, 1, 1, 3, 1]) #(batch_size, output_size, output_size, 3, 2)
+    xy_grid = tf.cast(xy_grid, tf.float32) #(batch_size, output_size, output_size, 3, 2)
 
-    xy_grid = tf.meshgrid(tf.range(output_size), tf.range(output_size))
-    xy_grid = tf.expand_dims(tf.stack(xy_grid, axis=-1), axis=2)  # [gx, gy, 1, 2]
-    xy_grid = tf.tile(tf.expand_dims(xy_grid, axis=0), [batch_size, 1, 1, 3, 1])
-
-    xy_grid = tf.cast(xy_grid, tf.float32)
-
+    #Apply convert equation: tx, ty, tw,th, tc, tscore -> bx, by, bw, bh, bc, bscore
     pred_xy = ((tf.sigmoid(conv_raw_dxdy) * XYSCALE[i]) - 0.5 * (XYSCALE[i] - 1) + xy_grid) * \
-              STRIDES[i]
-    pred_wh = (tf.exp(conv_raw_dwdh) * ANCHORS[i])
-    pred_xywh = tf.concat([pred_xy, pred_wh], axis=-1)
+              STRIDES[i] #(batch_size, output_size, output_size, 3, 2)
+    pred_wh = (tf.exp(conv_raw_dwdh) * ANCHORS[i]) #(batch_size, output_size, output_size, 3, 2),
+    pred_xywh = tf.concat([pred_xy, pred_wh], axis=-1) #(batch_size, output_size, output_size, 3, 4),
 
-    pred_conf = tf.sigmoid(conv_raw_conf)
-    pred_prob = tf.sigmoid(conv_raw_prob)
+    pred_conf = tf.sigmoid(conv_raw_conf) #(batch_size, output_size, output_size, 3, 1),
+    pred_prob = tf.sigmoid(conv_raw_prob) #(batch_size, output_size, output_size, 3, 1),
 
-    pred_prob = pred_conf * pred_prob
-    pred_prob = tf.reshape(pred_prob, (batch_size, -1, NUM_CLASS))
-    pred_xywh = tf.reshape(pred_xywh, (batch_size, -1, 4))
+    pred_prob = pred_conf * pred_prob #(batch_size, output_size, output_size, 3, 1),
+    pred_prob = tf.reshape(pred_prob, (batch_size, -1, NUM_CLASS)) #(batch_size, 3*output_size*output_size,  1),
+    pred_xywh = tf.reshape(pred_xywh, (batch_size, -1, 4)) #(batch_size, 3*output_size*output_size,  4),
 
     return pred_xywh, pred_prob
     # return tf.concat([pred_xywh, pred_conf, pred_prob], axis=-1)
