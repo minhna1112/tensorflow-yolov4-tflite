@@ -10,8 +10,10 @@ from tensorflow.python.compiler.tensorrt import trt_convert as trt
 import core.utils as utils
 from tensorflow.python.saved_model import signature_constants
 import os
-from tensorflow.compat.v1 import ConfigProto
-from tensorflow.compat.v1 import InteractiveSession
+#from tensorflow.compat.v1 import ConfigProto
+#from tensorflow.compat.v1 import InteractiveSession
+from tensorflow._api.v2.compat.v1 import ConfigProto
+from tensorflow._api.v2.compat.v1 import InteractiveSession
 
 flags.DEFINE_string('weights', './checkpoints/yolov4-416', 'path to weights file')
 flags.DEFINE_string('output', './checkpoints/yolov4-trt-fp16-416', 'path to output')
