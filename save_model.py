@@ -5,13 +5,17 @@ from core.yolov4 import YOLO, decode, filter_boxes
 import core.utils as utils
 from core.config import cfg
 
+tf.keras.backend.clear_session()
+
+
 flags.DEFINE_string('weights', './data/yolov4.weights', 'path to weights file')
 flags.DEFINE_string('output', './checkpoints/yolov4-416', 'path to output')
 flags.DEFINE_boolean('tiny', False, 'is yolo-tiny or not')
 flags.DEFINE_integer('input_size', 416, 'define input size of export model')
-flags.DEFINE_float('score_thres', 0.2, 'define score threshold')
+flags.DEFINE_float('score_thres', 0.25, 'define score threshold')
 flags.DEFINE_string('framework', 'tf', 'define what framework do you want to convert (tf, trt, tflite)')
 flags.DEFINE_string('model', 'yolov4', 'yolov3 or yolov4')
+
 
 def save_tf():
   STRIDES, ANCHORS, NUM_CLASS, XYSCALE = utils.load_config(FLAGS)
@@ -45,8 +49,16 @@ def save_tf():
   else:
     boxes, pred_conf = filter_boxes(pred_bbox, pred_prob, score_threshold=FLAGS.score_thres, input_shape=tf.constant([FLAGS.input_size, FLAGS.input_size]))
     pred = tf.concat([boxes, pred_conf], axis=-1)
+
   model = tf.keras.Model(input_layer, pred)
-  utils.load_weights(model, FLAGS.weights, FLAGS.model, FLAGS.tiny)
+  #print(model.outputs)
+
+  #optimize load weights to be compatible to both darknet, checkpoints format
+  if FLAGS.weights.split(".")[len(FLAGS.weights.split(".")) - 1] == "weights":
+    utils.load_weights(model, FLAGS.weights)
+  else:
+    model.load_weights(FLAGS.weights).expect_partial()
+  #utils.load_weights(model, FLAGS.weights, FLAGS.model, FLAGS.tiny)
   model.summary()
   model.save(FLAGS.output)
 
