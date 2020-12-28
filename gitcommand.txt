@@ -1,0 +1,6 @@
+!git config --global user.name "minhna1112"
+!git config --global user.emai "minhngau2804@gmail.com"
+!git remote set-url origin https://minhna1112:CunDangIeu1112@github.com/minhna1112/tensorflow-yolov4-tflite.git
+!git add 
+!git commit -m
+!git push
