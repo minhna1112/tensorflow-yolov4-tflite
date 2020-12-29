@@ -4,6 +4,10 @@ import colorsys
 import numpy as np
 import tensorflow as tf
 from core.config import cfg
+from tensorflow.python.framework import tensor_util
+from tensorflow.core.util import event_pb2
+from tensorflow.python.lib.io import tf_record
+import os
 
 def load_freeze_layer(model='yolov4', tiny=False):
     if tiny:
@@ -373,3 +377,15 @@ def unfreeze_all(model, frozen=False):
         for l in model.layers:
             unfreeze_all(l, frozen)
 
+def my_summary_iterator(path):
+    for r in tf_record.tf_record_iterator(path):
+        yield event_pb2.Event.FromString(r)
+
+def read_summary(summary_dir):
+    for filename in os.listdir(summary_dir):
+        path = os.path.join(summary_dir, filename)
+        for event in my_summary_iterator(path):
+            for value in event.summary.value:
+                if value.tag == 'loss/conf_loss':
+                    t = tensor_util.MakeNdarray(value.tensor)
+                    print(event.step, value.tag, t)
