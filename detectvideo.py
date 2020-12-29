@@ -16,7 +16,6 @@ import numpy as np
 #from tensorflow.compat.v1 import InteractiveSession
 from tensorflow._api.v2.compat.v1 import ConfigProto
 from tensorflow._api.v2.compat.v1 import InteractiveSession
-
 flags.DEFINE_string('framework', 'tf', '(tf, tflite, trt')
 flags.DEFINE_string('weights', './checkpoints/yolov4-416',
                     'path to weights file')
@@ -61,6 +60,7 @@ def main(_argv):
         out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
 
     frame_id = 0
+    total_time =0
     while True:
         return_value, frame = vid.read()
         if return_value:
@@ -69,6 +69,7 @@ def main(_argv):
         else:
             if frame_id == vid.get(cv2.CAP_PROP_FRAME_COUNT):
                 print("Video processing complete")
+                print("FPS: {}".format(frame_id/total_time))
                 break
             raise ValueError("No image! Try with another video format")
         
@@ -122,6 +123,7 @@ def main(_argv):
             out.write(result)
 
         frame_id += 1
+        total_time +=exec_time
 
 if __name__ == '__main__':
     try:
