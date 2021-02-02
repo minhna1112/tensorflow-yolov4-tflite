@@ -9,7 +9,7 @@ tf.keras.backend.clear_session()
 
 
 flags.DEFINE_string('weights', './data/yolov4.weights', 'path to weights file')
-flags.DEFINE_string('output', './checkpoints/yolov4-416', 'path to output')
+flags.DEFINE_string('output', './saved_model/yolov4_tiny_full_epoches_0.5', 'path to output')
 flags.DEFINE_boolean('tiny', False, 'is yolo-tiny or not')
 flags.DEFINE_integer('input_size', 416, 'define input size of export model')
 flags.DEFINE_float('score_thres', 0.25, 'define score threshold')
@@ -55,10 +55,10 @@ def save_tf():
 
   #optimize load weights to be compatible to both darknet, checkpoints format
   if FLAGS.weights.split(".")[len(FLAGS.weights.split(".")) - 1] == "weights":
-    utils.load_weights(model, FLAGS.weights)
+    utils.load_weights(model, FLAGS.weights, FLAGS.model, FLAGS.tiny)
   else:
     model.load_weights(FLAGS.weights).expect_partial()
-  #utils.load_weights(model, FLAGS.weights, FLAGS.model, FLAGS.tiny)
+
   model.summary()
   model.save(FLAGS.output)
 
